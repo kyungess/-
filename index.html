@@ -302,14 +302,17 @@
   }
   .nick-card .skip{display:block; margin-top:12px; font-size:12.5px; color:var(--ink-faint); background:none; border:none; cursor:pointer; text-decoration:underline;}
 
-  /* ---------- comment modal ---------- */
-  .cmt-body{padding:20px 26px 30px; overflow-y:auto;}
-  .comment-row{padding:10px 0; border-bottom:1px solid var(--paper-line);}
+  /* ---------- comments (inside read modal) ---------- */
+  .cmt-divider{border-top:1px solid var(--line); margin:24px 0 18px;}
+  .cmt-heading{font-family:var(--f-sub); font-size:14px; color:var(--ink); margin:0 0 10px;}
+  .cmt-list{margin-bottom:16px;}
+  .comment-row{padding:10px 0; border-bottom:1px solid var(--paper-line); display:flex; align-items:flex-start; gap:10px;}
   .comment-row .meta{font-size:12px; color:var(--ink-faint); margin-bottom:3px; display:flex; gap:8px; font-variant-numeric:tabular-nums;}
-  .comment-row .meta b{color:var(--ink-soft); font-weight:700;}
+  .comment-row .meta b{color:var(--ink-soft); font-family:var(--f-sub);}
   .comment-row p{margin:0; font-size:14px; line-height:1.6; color:var(--ink); white-space:pre-line;}
-  .cmt-foot{padding:12px 26px 22px; border-top:1px solid var(--line);}
-  .cmt-foot textarea{
+  .comment-del{background:none; border:none; cursor:pointer; font-size:14px; opacity:.55; flex:none; padding:2px; line-height:1;}
+  .comment-del:hover{opacity:1;}
+  .cmt-compose textarea{
     width:100%; min-height:56px; resize:vertical; border:1px solid var(--line); border-radius:8px;
     padding:9px 11px; font-family:inherit; font-size:13.5px; background:var(--paper); color:var(--ink); margin-bottom:8px;
   }
@@ -330,7 +333,7 @@
   <div class="site-inner">
     <div class="brand">
       <h1>Gcomm Insight News</h1>
-      <span class="sub">사내 트렌드 뉴스레터 아카이브</span>
+      <span class="sub">사내 트렌드 뉴스레터 아카이브 · 매주 수요일 업데이트</span>
     </div>
     <div class="stats" id="statsBox">오늘 방문 – · 누적 방문 –</div>
   </div>
@@ -362,22 +365,6 @@
       <button class="read-close" id="readClose" aria-label="닫기">✕</button>
     </div>
     <div class="read-body" id="readBody"></div>
-  </div>
-</div>
-
-<div class="read-scrim" id="cmtScrim">
-  <div class="read-modal">
-    <div class="read-head">
-      <div><h3 id="cmtTitle">댓글</h3></div>
-      <button class="read-close" id="cmtClose" aria-label="닫기">✕</button>
-    </div>
-    <div class="cmt-body" id="cmtBody"></div>
-    <div class="cmt-foot">
-      <textarea id="cmtInput" placeholder="댓글을 남겨보세요"></textarea>
-      <div style="display:flex; justify-content:flex-end;">
-        <button class="btn-primary" id="cmtSubmit">댓글 남기기</button>
-      </div>
-    </div>
   </div>
 </div>
 
@@ -451,7 +438,6 @@ window.__CARDS__ = [
   var memosData = [];
   var memosLoaded = false;
   var commentsCache = {};
-  var currentMemoId = null;
   var viewCounts = {};
   var commentCounts = {};
   var countsLoaded = false;
@@ -557,7 +543,7 @@ window.__CARDS__ = [
       if(!r.ok) throw new Error('post failed');
       showToast('댓글을 남겼어요');
       commentCounts[targetId] = (commentCounts[targetId]||0)+1;
-      fetchComments(targetId, function(list){ renderCommentList(list); });
+      fetchComments(targetId, function(list){ renderReadComments(list); });
       render();
       if(cb) cb(true);
     }).catch(function(){ showToast('저장에 실패했어요.'); if(cb) cb(false); });
@@ -691,12 +677,11 @@ window.__CARDS__ = [
 
   function bindCardEvents(){
     app.querySelectorAll('.more[data-read]').forEach(function(btn){
-      btn.addEventListener('click', function(){ openReadModal(btn.dataset.read); });
+      btn.addEventListener('click', function(){ openReadModal(btn.dataset.read, false); });
     });
     app.querySelectorAll('.cmt-btn[data-cmt]').forEach(function(btn){
-      btn.addEventListener('click', function(){ openCommentModal(btn.dataset.cmt); });
+      btn.addEventListener('click', function(){ openReadModal(btn.dataset.cmt, true); });
     });
-    app.querySelectorAll('.card[data-id]').forEach(function(el){ recordView(el.dataset.id); });
   }
 
   /* ---------- insight memo tab (싸이월드 일촌평 스타일 방명록) ---------- */
@@ -745,42 +730,6 @@ window.__CARDS__ = [
     }
   }
 
-  /* ---------- comment modal ---------- */
-  function openCommentModal(targetId){
-    currentMemoId = targetId;
-    var c = findCard(targetId);
-    document.getElementById('cmtTitle').textContent = c ? c.title+' 댓글' : '댓글';
-    document.getElementById('cmtBody').innerHTML = '<p class="empty-note">불러오는 중...</p>';
-    document.getElementById('cmtScrim').classList.add('open');
-    fetchComments(targetId, function(list){ renderCommentList(list); });
-  }
-  function closeCommentModal(){
-    document.getElementById('cmtScrim').classList.remove('open');
-    currentMemoId = null;
-  }
-  function renderCommentList(list){
-    var el = document.getElementById('cmtBody');
-    if(!list || list.length===0){
-      el.innerHTML = '<p class="empty-note">아직 댓글이 없어요. 첫 댓글을 남겨보세요.</p>';
-      return;
-    }
-    el.innerHTML = list.map(function(c){
-      return '<div class="comment-row"><div class="meta"><b>'+esc(c.nickname)+'</b><span>'+fmtTime(c.created_at)+'</span></div><p>'+esc(c.text)+'</p></div>';
-    }).join('');
-  }
-  document.getElementById('cmtClose').addEventListener('click', closeCommentModal);
-  document.getElementById('cmtScrim').addEventListener('click', function(e){
-    if(e.target.id==='cmtScrim') closeCommentModal();
-  });
-  document.getElementById('cmtSubmit').addEventListener('click', function(){
-    var ta = document.getElementById('cmtInput');
-    var text = ta.value.trim();
-    if(!text || !currentMemoId) return;
-    requireNickname(function(){
-      postComment(currentMemoId, text, function(ok){ if(ok) ta.value=''; });
-    });
-  });
-
   /* ---------- nav ---------- */
   var topNav = document.getElementById('topNav');
   var memoNavBtn = document.getElementById('memoNavBtn');
@@ -802,26 +751,88 @@ window.__CARDS__ = [
   });
   memoNavBtn.addEventListener('click', function(){ setActiveTab('memo'); });
 
-  /* ---------- read modal (full quote, own overlay) ---------- */
-  function openReadModal(id){
+  /* ---------- read modal: full quote + comments, one overlay ---------- */
+  var currentReadId = null;
+  function openReadModal(id, scrollToComments){
     var c = findCard(id);
     if(!c) return;
+    currentReadId = id;
+    recordView(id);
     var img = c.img ? ('<img src="'+c.img+'" alt="">'+(c.cap?'<div class="cap">'+esc(c.cap)+'</div>':'')) : '';
     document.getElementById('readTag').textContent = GROUP_META[c.group].label+' · '+c.kicker+(c.date?' · '+c.date:'');
     document.getElementById('readTag').className = 'tag '+c.group;
     document.getElementById('readTitle').textContent = c.title;
-    document.getElementById('readBody').innerHTML = img+'<p>'+esc(c.quote||'')+'</p>';
+    document.getElementById('readBody').innerHTML =
+      img+'<p>'+esc(c.quote||'')+'</p>'+
+      '<div class="cmt-divider"></div>'+
+      '<h4 class="cmt-heading">댓글</h4>'+
+      '<div class="cmt-list" id="readCmtList"><p class="empty-note">불러오는 중...</p></div>'+
+      '<div class="cmt-compose">'+
+        '<textarea id="readCmtInput" placeholder="댓글을 남겨보세요"></textarea>'+
+        '<div style="display:flex; justify-content:flex-end;"><button class="btn-primary" id="readCmtSubmit">댓글 남기기</button></div>'+
+      '</div>';
     document.getElementById('readScrim').classList.add('open');
+    document.getElementById('readCmtSubmit').addEventListener('click', function(){
+      var ta = document.getElementById('readCmtInput');
+      var text = ta.value.trim();
+      if(!text) return;
+      requireNickname(function(){
+        postComment(id, text, function(ok){ if(ok) ta.value=''; });
+      });
+    });
+    fetchComments(id, function(list){ renderReadComments(list); });
+    if(scrollToComments){
+      setTimeout(function(){
+        var div = document.querySelector('#readBody .cmt-divider');
+        if(div) div.scrollIntoView({behavior:'smooth', block:'start'});
+      }, 60);
+    }
+  }
+  function renderReadComments(list){
+    var el = document.getElementById('readCmtList');
+    if(!el) return;
+    if(!list || list.length===0){
+      el.innerHTML = '<p class="empty-note">아직 댓글이 없어요. 첫 댓글을 남겨보세요.</p>';
+      return;
+    }
+    el.innerHTML = list.map(function(c){
+      var mine = nickname && c.nickname===nickname;
+      return '<div class="comment-row">'+
+        '<div style="flex:1; min-width:0;">'+
+          '<div class="meta"><b>'+esc(c.nickname)+'</b><span>'+fmtTime(c.created_at)+'</span></div>'+
+          '<p>'+esc(c.text)+'</p>'+
+        '</div>'+
+        (mine ? '<button class="comment-del" data-cid="'+c.id+'" aria-label="삭제">🗑️</button>' : '')+
+      '</div>';
+    }).join('');
+    el.querySelectorAll('.comment-del[data-cid]').forEach(function(btn){
+      btn.addEventListener('click', function(){
+        if(!confirm('댓글을 삭제할까요?')) return;
+        deleteComment(btn.dataset.cid, currentReadId);
+      });
+    });
+  }
+  function deleteComment(commentId, targetId){
+    fetch(SUPABASE_URL+'/rest/v1/comments?id=eq.'+encodeURIComponent(commentId), {
+      method:'DELETE', headers: sbHeaders({'Prefer':'return=minimal'})
+    }).then(function(r){
+      if(!r.ok) throw new Error('delete failed');
+      commentCounts[targetId] = Math.max(0, (commentCounts[targetId]||1)-1);
+      showToast('댓글을 삭제했어요');
+      fetchComments(targetId, function(list){ renderReadComments(list); });
+      render();
+    }).catch(function(){ showToast('삭제에 실패했어요.'); });
   }
   function closeReadModal(){
     document.getElementById('readScrim').classList.remove('open');
+    currentReadId = null;
   }
   document.getElementById('readClose').addEventListener('click', closeReadModal);
   document.getElementById('readScrim').addEventListener('click', function(e){
     if(e.target.id==='readScrim') closeReadModal();
   });
   document.addEventListener('keydown', function(e){
-    if(e.key==='Escape'){ closeReadModal(); closeCommentModal(); }
+    if(e.key==='Escape'){ closeReadModal(); }
   });
 
   /* ---------- boot ---------- */
