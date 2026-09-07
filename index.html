@@ -13,6 +13,7 @@
     --tag-univ:#28407A; --tag-univ-bg:#E4EAF6;
     --tag-oa:#1B7A6B; --tag-oa-bg:#DCEFEA;
     --tag-cr:#6A3FA0; --tag-cr-bg:#EBE1F5;
+    --tag-memo:#8A6A10; --tag-memo-bg:#FBF0D2;
     --shadow:rgba(30,24,16,0.14); --shadow-soft:rgba(30,24,16,0.08);
     --focus:#1c6fd6;
     --pin:#F0630F; --pin-shine:#FFC49A;
@@ -29,6 +30,7 @@
       --tag-univ:#9DB3E8; --tag-univ-bg:#212B42;
       --tag-oa:#7FD9C4; --tag-oa-bg:#123832;
       --tag-cr:#C9AEEA; --tag-cr-bg:#2E2140;
+      --tag-memo:#F0D27A; --tag-memo-bg:#3A2F12;
       --shadow:rgba(0,0,0,0.5); --shadow-soft:rgba(0,0,0,0.35);
       --line:#3a3428;
     }
@@ -43,6 +45,7 @@
     --tag-univ:#9DB3E8; --tag-univ-bg:#212B42;
     --tag-oa:#7FD9C4; --tag-oa-bg:#123832;
     --tag-cr:#C9AEEA; --tag-cr-bg:#2E2140;
+    --tag-memo:#F0D27A; --tag-memo-bg:#3A2F12;
     --shadow:rgba(0,0,0,0.5); --shadow-soft:rgba(0,0,0,0.35);
     --line:#3a3428;
   }
@@ -76,10 +79,16 @@
     font-family:'Black Han Sans'; font-size:21px; color:var(--ink-soft); line-height:1.3; cursor:default;
   }
   .side-week.active{color:var(--accent);}
+  .side-memo{
+    display:block; margin-top:26px; background:none; border:none; padding:0;
+    font-family:'Black Han Sans'; font-size:15px; color:var(--ink-soft); cursor:pointer; text-align:left;
+  }
+  .side-memo:hover, .side-memo.active{color:var(--accent);}
   @media (max-width:760px){
     .layout{flex-direction:column; gap:18px;}
     .sidebar{width:100%; display:flex; align-items:baseline; gap:16px; position:static;}
     .side-label{margin-bottom:0;}
+    .side-memo{margin-top:0;}
   }
 
   /* ---------- header ---------- */
@@ -119,6 +128,7 @@
   .badge.univ{background:var(--tag-univ-bg); color:var(--tag-univ);}
   .badge.oa{background:var(--tag-oa-bg); color:var(--tag-oa);}
   .badge.cr{background:var(--tag-cr-bg); color:var(--tag-cr);}
+  .badge.memo{background:var(--tag-memo-bg); color:var(--tag-memo);}
   .group-head h2{font-size:clamp(20px,3vw,26px); margin:0;}
   .group-note{
     font-size:14px; color:var(--ink-soft); line-height:1.7; margin:-6px 0 20px;
@@ -204,6 +214,75 @@
   footer.site-foot{text-align:center; padding:50px 20px 10px; font-size:12px; color:var(--ink-faint); line-height:1.8;}
   footer.site-foot a{color:var(--accent); text-decoration:none; border-bottom:1px dashed var(--accent);}
 
+  /* ---------- insight memo ---------- */
+  .memo-composer{
+    background:var(--card); border-radius:12px; padding:16px; margin:20px 0 30px;
+    max-width:620px; box-shadow:0 8px 18px -6px var(--shadow);
+  }
+  .memo-composer textarea{
+    width:100%; min-height:80px; resize:vertical; border:1px solid var(--line); border-radius:8px;
+    padding:10px 12px; font-family:inherit; font-size:14px; color:var(--ink); background:var(--paper);
+  }
+  .memo-composer .row{display:flex; justify-content:flex-end; margin-top:10px;}
+  .btn-primary{
+    background:var(--accent); color:var(--accent-ink); border:none; border-radius:999px;
+    padding:9px 20px; font-size:14px; font-weight:700; cursor:pointer;
+  }
+  .btn-primary:disabled{opacity:.5; cursor:not-allowed;}
+  .memo-grid{display:grid; grid-template-columns:repeat(auto-fill,minmax(240px,1fr)); gap:22px;}
+  .memo-card{
+    background:#FFF3DC; color:#4A3B0A; border-radius:3px; padding:16px 15px 13px;
+    box-shadow:0 8px 16px -6px var(--shadow); position:relative; transform:rotate(var(--tilt,0deg));
+    min-height:120px; display:flex; flex-direction:column;
+  }
+  .memo-card::before{
+    content:""; position:absolute; top:-8px; left:18px; width:14px; height:14px; border-radius:50%;
+    background:radial-gradient(circle at 32% 28%, var(--pin-shine), var(--pin) 60%); box-shadow:0 3px 4px var(--shadow);
+  }
+  .memo-card p{font-size:14px; line-height:1.6; margin:6px 0 12px; white-space:pre-line; font-family:'Gowun Batang',serif;}
+  .memo-card .who{font-size:11.5px; opacity:.7; margin-top:auto;}
+  .memo-card footer{margin-top:8px; padding-top:8px; border-top:1px dashed rgba(74,59,10,.25);}
+  .memo-card .cmt-btn{background:none; border:none; color:#4A3B0A; opacity:.85; font-size:12.5px; cursor:pointer; padding:0; text-decoration:underline;}
+  .empty-note{color:var(--ink-faint); font-size:13.5px; padding:10px 2px;}
+
+  /* ---------- nickname modal ---------- */
+  .nick-scrim{position:fixed; inset:0; background:rgba(20,16,8,.55); z-index:130; display:flex; align-items:center; justify-content:center; padding:20px;}
+  .nick-card{
+    background:var(--paper); border-radius:12px; padding:28px 26px; max-width:340px; width:100%;
+    text-align:center; box-shadow:0 20px 50px rgba(0,0,0,.4); position:relative;
+  }
+  .nick-card::before{
+    content:""; position:absolute; top:-10px; left:50%; transform:translateX(-50%);
+    width:18px; height:18px; border-radius:50%;
+    background:radial-gradient(circle at 32% 28%, var(--pin-shine), var(--pin) 60%); box-shadow:0 3px 5px rgba(0,0,0,.4);
+  }
+  .nick-card h3{margin:6px 0 8px; font-size:19px;}
+  .nick-card p{font-size:13.5px; color:var(--ink-soft); line-height:1.6; margin:0 0 16px;}
+  .nick-card input{
+    width:100%; padding:11px 13px; border:1px solid var(--line); border-radius:8px; font-size:15px;
+    font-family:inherit; margin-bottom:12px; background:var(--paper); color:var(--ink); text-align:center;
+  }
+  .nick-card .skip{display:block; margin-top:12px; font-size:12.5px; color:var(--ink-faint); background:none; border:none; cursor:pointer; text-decoration:underline;}
+
+  /* ---------- comment modal ---------- */
+  .cmt-body{padding:20px 26px 30px; overflow-y:auto;}
+  .comment-row{padding:10px 0; border-bottom:1px solid var(--paper-line);}
+  .comment-row .meta{font-size:12px; color:var(--ink-faint); margin-bottom:3px; display:flex; gap:8px; font-variant-numeric:tabular-nums;}
+  .comment-row .meta b{color:var(--ink-soft); font-weight:700;}
+  .comment-row p{margin:0; font-size:14px; line-height:1.6; color:var(--ink); white-space:pre-line;}
+  .cmt-foot{padding:12px 26px 22px; border-top:1px solid var(--line);}
+  .cmt-foot textarea{
+    width:100%; min-height:56px; resize:vertical; border:1px solid var(--line); border-radius:8px;
+    padding:9px 11px; font-family:inherit; font-size:13.5px; background:var(--paper); color:var(--ink); margin-bottom:8px;
+  }
+
+  .toast{
+    position:fixed; bottom:22px; left:50%; transform:translateX(-50%) translateY(20px); z-index:140;
+    background:var(--ink); color:var(--paper); padding:10px 18px; border-radius:999px; font-size:13.5px;
+    opacity:0; pointer-events:none; transition:opacity .2s ease, transform .2s ease;
+  }
+  .toast.show{opacity:1; transform:translateX(-50%) translateY(0);}
+
   @media (prefers-reduced-motion:reduce){
     .card, .read-scrim, nav.tabs button{transition:none !important;}
   }
@@ -230,6 +309,7 @@
   <aside class="sidebar" id="sidebar">
     <div class="side-label">Weekly Topic</div>
     <div class="side-week active" data-week="w1">9월 1주차</div>
+    <button class="side-memo" id="memoNavBtn">📌 Insight Memo</button>
   </aside>
   <div class="wrap" id="app"></div>
 </div>
@@ -245,6 +325,24 @@
     <div class="read-body" id="readBody"></div>
   </div>
 </div>
+
+<div class="read-scrim" id="cmtScrim">
+  <div class="read-modal">
+    <div class="read-head">
+      <div><h3 id="cmtTitle">댓글</h3></div>
+      <button class="read-close" id="cmtClose" aria-label="닫기">✕</button>
+    </div>
+    <div class="cmt-body" id="cmtBody"></div>
+    <div class="cmt-foot">
+      <textarea id="cmtInput" placeholder="댓글을 남겨보세요"></textarea>
+      <div style="display:flex; justify-content:flex-end;">
+        <button class="btn-primary" id="cmtSubmit">댓글 남기기</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<div class="toast" id="toast"></div>
 
 <script>
 window.__CARDS__ = [
@@ -308,10 +406,115 @@ window.__CARDS__ = [
   var activeTab = 'all';
   var app = document.getElementById('app');
 
+  var SUPABASE_URL = 'https://whsupxtszczmouynefaa.supabase.co';
+  var SUPABASE_KEY = 'sb_publishable_bfKAD1jwzjr3miLUk7Wn4g_3qKSwDPD';
+  var nickname = localStorage.getItem('gin_nickname') || '';
+  var memosData = [];
+  var memosLoaded = false;
+  var commentsCache = {};
+  var currentMemoId = null;
+
   function esc(s){
     return String(s==null?'':s).replace(/[&<>"']/g, function(c){
       return {'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c];
     });
+  }
+  function fmtTime(ts){
+    try{
+      var d = new Date(ts);
+      var mm = d.getMinutes();
+      return (d.getMonth()+1)+'/'+d.getDate()+' '+d.getHours()+':'+(mm<10?'0':'')+mm;
+    }catch(e){ return ''; }
+  }
+  function showToast(msg){
+    var t = document.getElementById('toast');
+    t.textContent = msg;
+    t.classList.add('show');
+    clearTimeout(showToast._h);
+    showToast._h = setTimeout(function(){ t.classList.remove('show'); }, 2500);
+  }
+
+  /* ---------- nickname gate ---------- */
+  function ensureNickname(cb){
+    if(nickname){ cb(); return; }
+    var scrim = document.createElement('div');
+    scrim.className = 'nick-scrim';
+    scrim.innerHTML =
+      '<div class="nick-card">'+
+        '<h3>닉네임을 입력해주세요</h3>'+
+        '<p>메모와 댓글을 남기려면<br>익명 닉네임이 필요해요. 언제든 바꿀 수 있어요.</p>'+
+        '<input id="nickInput" maxlength="16" placeholder="예: 오후세시커피" autocomplete="off">'+
+        '<button class="btn-primary" id="nickSubmit" style="width:100%;">입장하기</button>'+
+        '<button class="skip" id="nickSkip">닉네임 없이 둘러보기</button>'+
+      '</div>';
+    document.body.appendChild(scrim);
+    var input = scrim.querySelector('#nickInput');
+    input.focus();
+    function submit(){
+      var v = input.value.trim();
+      if(!v){ input.focus(); return; }
+      nickname = v.slice(0,16);
+      localStorage.setItem('gin_nickname', nickname);
+      document.body.removeChild(scrim);
+      cb();
+    }
+    scrim.querySelector('#nickSubmit').addEventListener('click', submit);
+    input.addEventListener('keydown', function(e){ if(e.key==='Enter') submit(); });
+    scrim.querySelector('#nickSkip').addEventListener('click', function(){
+      document.body.removeChild(scrim);
+      cb();
+    });
+  }
+  function requireNickname(action){
+    if(nickname){ action(); return; }
+    ensureNickname(function(){ if(nickname) action(); });
+  }
+
+  /* ---------- supabase (insight memo storage) ---------- */
+  function sbHeaders(extra){
+    var h = {
+      'apikey': SUPABASE_KEY,
+      'Authorization': 'Bearer ' + SUPABASE_KEY,
+      'Content-Type': 'application/json'
+    };
+    if(extra){ for(var k in extra){ h[k] = extra[k]; } }
+    return h;
+  }
+  function fetchMemos(cb){
+    fetch(SUPABASE_URL+'/rest/v1/memos?select=*&order=created_at.desc', {headers:sbHeaders()})
+      .then(function(r){ if(!r.ok) throw new Error('fetch failed'); return r.json(); })
+      .then(function(data){ memosData = data; if(cb) cb(); })
+      .catch(function(){ showToast('메모를 불러오지 못했어요.'); if(cb) cb(); });
+  }
+  function postMemo(text, cb){
+    fetch(SUPABASE_URL+'/rest/v1/memos', {
+      method:'POST',
+      headers: sbHeaders({'Prefer':'return=minimal'}),
+      body: JSON.stringify({nickname:nickname, text:text})
+    }).then(function(r){
+      if(!r.ok) throw new Error('post failed');
+      showToast('메모를 남겼어요 📌');
+      fetchMemos(function(){ if(activeTab==='memo'){ app.innerHTML = memoShellHTML(false); bindMemoEvents(); } });
+      if(cb) cb(true);
+    }).catch(function(){ showToast('저장에 실패했어요.'); if(cb) cb(false); });
+  }
+  function fetchComments(memoId, cb){
+    fetch(SUPABASE_URL+'/rest/v1/comments?target_id=eq.'+encodeURIComponent(memoId)+'&order=created_at.asc', {headers:sbHeaders()})
+      .then(function(r){ if(!r.ok) throw new Error('fetch failed'); return r.json(); })
+      .then(function(data){ commentsCache[memoId]=data; if(cb) cb(data); })
+      .catch(function(){ showToast('댓글을 불러오지 못했어요.'); if(cb) cb([]); });
+  }
+  function postComment(memoId, text, cb){
+    fetch(SUPABASE_URL+'/rest/v1/comments', {
+      method:'POST',
+      headers: sbHeaders({'Prefer':'return=minimal'}),
+      body: JSON.stringify({target_id:String(memoId), nickname:nickname, text:text})
+    }).then(function(r){
+      if(!r.ok) throw new Error('post failed');
+      showToast('댓글을 남겼어요');
+      fetchComments(memoId, function(list){ renderCommentList(list); });
+      if(cb) cb(true);
+    }).catch(function(){ showToast('저장에 실패했어요.'); if(cb) cb(false); });
   }
 
   /* ---------- rendering ---------- */
@@ -348,6 +551,18 @@ window.__CARDS__ = [
   }
 
   function render(){
+    if(activeTab==='memo'){
+      app.innerHTML = memoShellHTML(!memosLoaded);
+      bindMemoEvents();
+      if(!memosLoaded){
+        fetchMemos(function(){
+          memosLoaded = true;
+          if(activeTab==='memo'){ app.innerHTML = memoShellHTML(false); bindMemoEvents(); }
+        });
+      }
+      return;
+    }
+
     var byGroup = {nn:[], ct:[], univ:[], oa:[], cr:[]};
     CARDS.forEach(function(c){ byGroup[c.group].push(c); });
 
@@ -370,17 +585,108 @@ window.__CARDS__ = [
     });
   }
 
-  /* ---------- top category nav ---------- */
+  /* ---------- insight memo tab ---------- */
+  function memoShellHTML(loading){
+    var head = '<div class="group-head"><span class="badge memo">📌 Insight Memo</span></div>'+
+      '<p class="group-note">자유롭게 의견을 나눠 주세요!<br>추가로 구독하고 싶은 뉴스레터가 있다면 알려주세요!</p>';
+    var composer = '<div class="memo-composer">'+
+      '<textarea id="memoInput" placeholder="이번 주 뉴스레터를 보고 든 생각이나, 추가로 구독하고 싶은 뉴스레터를 자유롭게 남겨주세요."></textarea>'+
+      '<div class="row"><button class="btn-primary" id="memoSubmit">메모 남기기</button></div>'+
+    '</div>';
+    var list;
+    if(loading){
+      list = '<p class="empty-note">불러오는 중...</p>';
+    } else if(memosData.length===0){
+      list = '<p class="empty-note">아직 메모가 없어요. 첫 메모를 남겨보세요 📌</p>';
+    } else {
+      list = '<div class="memo-grid">'+ memosData.map(function(m,i){ return memoCardHTML(m,i); }).join('') +'</div>';
+    }
+    return head + composer + list;
+  }
+
+  function memoCardHTML(m, i){
+    var t = (i%2===0 ? -1.1 : 1.0) + ((i%3)*0.3);
+    var cCount = (commentsCache[m.id]||[]).length;
+    return (
+    '<div class="memo-card" style="--tilt:'+t+'deg" data-id="'+m.id+'">'+
+      '<p>'+esc(m.text)+'</p>'+
+      '<div class="who">'+esc(m.nickname)+' · '+fmtTime(m.created_at)+'</div>'+
+      '<footer><button class="cmt-btn" data-cmt="'+m.id+'">댓글 달기'+(cCount?' ('+cCount+')':'')+'</button></footer>'+
+    '</div>');
+  }
+
+  function bindMemoEvents(){
+    var btn = document.getElementById('memoSubmit');
+    if(btn){
+      btn.addEventListener('click', function(){
+        var ta = document.getElementById('memoInput');
+        var text = ta.value.trim();
+        if(!text) return;
+        requireNickname(function(){
+          btn.disabled = true;
+          postMemo(text, function(ok){ btn.disabled = false; if(ok) ta.value=''; });
+        });
+      });
+    }
+    app.querySelectorAll('.cmt-btn[data-cmt]').forEach(function(b){
+      b.addEventListener('click', function(){ openCommentModal(b.dataset.cmt); });
+    });
+  }
+
+  /* ---------- comment modal ---------- */
+  function openCommentModal(memoId){
+    currentMemoId = memoId;
+    document.getElementById('cmtBody').innerHTML = '<p class="empty-note">불러오는 중...</p>';
+    document.getElementById('cmtScrim').classList.add('open');
+    fetchComments(memoId, function(list){ renderCommentList(list); });
+  }
+  function closeCommentModal(){
+    document.getElementById('cmtScrim').classList.remove('open');
+    currentMemoId = null;
+  }
+  function renderCommentList(list){
+    var el = document.getElementById('cmtBody');
+    if(!list || list.length===0){
+      el.innerHTML = '<p class="empty-note">아직 댓글이 없어요. 첫 댓글을 남겨보세요.</p>';
+      return;
+    }
+    el.innerHTML = list.map(function(c){
+      return '<div class="comment-row"><div class="meta"><b>'+esc(c.nickname)+'</b><span>'+fmtTime(c.created_at)+'</span></div><p>'+esc(c.text)+'</p></div>';
+    }).join('');
+  }
+  document.getElementById('cmtClose').addEventListener('click', closeCommentModal);
+  document.getElementById('cmtScrim').addEventListener('click', function(e){
+    if(e.target.id==='cmtScrim') closeCommentModal();
+  });
+  document.getElementById('cmtSubmit').addEventListener('click', function(){
+    var ta = document.getElementById('cmtInput');
+    var text = ta.value.trim();
+    if(!text || !currentMemoId) return;
+    requireNickname(function(){
+      postComment(currentMemoId, text, function(ok){ if(ok) ta.value=''; });
+    });
+  });
+
+  /* ---------- nav ---------- */
   var topNav = document.getElementById('topNav');
+  var memoNavBtn = document.getElementById('memoNavBtn');
+
+  function setActiveTab(tab){
+    activeTab = tab;
+    topNav.querySelectorAll('.cat[data-tab]').forEach(function(b){ b.classList.remove('active'); });
+    memoNavBtn.classList.remove('active');
+    if(tab==='memo'){ memoNavBtn.classList.add('active'); }
+    else { var btn = topNav.querySelector('.cat[data-tab="'+tab+'"]'); if(btn) btn.classList.add('active'); }
+    window.scrollTo({top:0, behavior:'instant'});
+    render();
+  }
+
   topNav.addEventListener('click', function(e){
     var catBtn = e.target.closest('.cat[data-tab]');
     if(!catBtn) return;
-    topNav.querySelectorAll('.cat[data-tab]').forEach(function(b){ b.classList.remove('active'); });
-    catBtn.classList.add('active');
-    activeTab = catBtn.dataset.tab;
-    window.scrollTo({top:0, behavior:'instant'});
-    render();
+    setActiveTab(catBtn.dataset.tab);
   });
+  memoNavBtn.addEventListener('click', function(){ setActiveTab('memo'); });
 
   /* ---------- read modal (full quote, own overlay) ---------- */
   function openReadModal(id){
@@ -401,11 +707,12 @@ window.__CARDS__ = [
     if(e.target.id==='readScrim') closeReadModal();
   });
   document.addEventListener('keydown', function(e){
-    if(e.key==='Escape'){ closeReadModal(); }
+    if(e.key==='Escape'){ closeReadModal(); closeCommentModal(); }
   });
 
   /* ---------- boot ---------- */
   render();
+  ensureNickname(function(){});
 
 })();
 </script>
