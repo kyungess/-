@@ -88,8 +88,10 @@
     text-transform:uppercase; color:var(--ink-faint); margin-bottom:8px;
   }
   .side-week{
-    font-family:var(--f-sub); font-size:21px; color:var(--ink-soft); line-height:1.3; cursor:default;
+    font-family:var(--f-sub); font-size:21px; color:var(--ink-soft); line-height:1.3; cursor:pointer;
   }
+  .side-week + .side-week{ margin-top:4px; }
+  .side-week:hover{ color:var(--ink); }
   .side-week.active{color:var(--accent);}
   .side-memo{
     display:block; margin-top:26px; background:none; border:none; padding:0;
@@ -350,7 +352,8 @@
 <div class="layout">
   <aside class="sidebar" id="sidebar">
     <div class="side-label">Weekly Topic</div>
-    <div class="side-week active" data-week="w1">9월 2주차</div>
+    <div class="side-week" data-week="w2">9월 2주차</div>
+    <div class="side-week" data-week="w1">9월 1주차</div>
     <button class="side-memo" id="memoNavBtn">📌 Insight Memo</button>
   </aside>
   <div class="wrap" id="app"></div>
@@ -387,7 +390,13 @@ window.__CARDS__ = [{"kicker":"브리핑","title":"오늘의 한 줄 브리핑",
     cr:   {label:'캐릿',       badge:'🥕 캐릿 · Vol.317',               note:'Z세대 트렌드 레터 캐릿. "몸 쓰는 즐거움, 피지컬 타임" 등 이번 주 유행템과 밈을 스크랩했어요.'}
   };
 
+  var WEEKS = [
+    {id:'w1', label:'9월 1주차', start:'2026.08.28', end:'2026.09.02'},
+    {id:'w2', label:'9월 2주차', start:'2026.09.03', end:'2026.09.07'}
+  ];
+
   var activeTab = 'all';
+  var activeWeek = null;
   var app = document.getElementById('app');
 
   var SUPABASE_URL = 'https://whsupxtszczmouynefaa.supabase.co';
@@ -597,11 +606,19 @@ window.__CARDS__ = [{"kicker":"브리핑","title":"오늘의 한 줄 브리핑",
   }
 
   function groupHTML(g, cards){
+    if(!cards.length) return '';
     var m = GROUP_META[g];
     var head = '<div class="group-head"><span class="badge '+g+'">'+esc(m.badge)+'</span></div>'+
       '<p class="group-note">'+esc(m.note)+'</p>';
     var body = '<div class="grid">'+ cards.map(function(c,i){return cardHTML(c,i);}).join('') +'</div>';
     return '<section data-group="'+g+'">'+head+body+'</section>';
+  }
+
+  function cardsForWeek(cards, weekId){
+    if(!weekId) return cards;
+    var w = WEEKS.filter(function(x){ return x.id===weekId; })[0];
+    if(!w) return cards;
+    return cards.filter(function(c){ return c.date && c.date>=w.start && c.date<=w.end; });
   }
 
   function render(){
@@ -617,19 +634,22 @@ window.__CARDS__ = [{"kicker":"브리핑","title":"오늘의 한 줄 브리핑",
       return;
     }
 
+    var weekCards = cardsForWeek(CARDS, activeWeek);
     var byGroup = {nn:[], ct:[], univ:[], oa:[], cr:[]};
-    CARDS.forEach(function(c){ byGroup[c.group].push(c); });
+    weekCards.forEach(function(c){ byGroup[c.group].push(c); });
 
+    var html;
     if(activeTab==='all'){
-      app.innerHTML =
+      html =
         groupHTML('ct', byGroup.ct) +
         groupHTML('univ', byGroup.univ) +
         groupHTML('oa', byGroup.oa) +
         groupHTML('cr', byGroup.cr) +
         groupHTML('nn', byGroup.nn);
     } else {
-      app.innerHTML = groupHTML(activeTab, byGroup[activeTab]);
+      html = groupHTML(activeTab, byGroup[activeTab]);
     }
+    app.innerHTML = html || '<p class="empty-note">해당 주차에는 카드가 없어요.</p>';
     bindCardEvents();
   }
 
@@ -708,6 +728,18 @@ window.__CARDS__ = [{"kicker":"브리핑","title":"오늘의 한 줄 브리핑",
     setActiveTab(catBtn.dataset.tab);
   });
   memoNavBtn.addEventListener('click', function(){ setActiveTab('memo'); });
+
+  var sidebar = document.getElementById('sidebar');
+  sidebar.addEventListener('click', function(e){
+    var wk = e.target.closest('.side-week[data-week]');
+    if(!wk) return;
+    var id = wk.dataset.week;
+    activeWeek = (activeWeek === id) ? null : id;
+    sidebar.querySelectorAll('.side-week').forEach(function(el){ el.classList.remove('active'); });
+    if(activeWeek) wk.classList.add('active');
+    window.scrollTo({top:0, behavior:'instant'});
+    render();
+  });
 
   /* ---------- read modal: full quote + comments, one overlay ---------- */
   var currentReadId = null;
