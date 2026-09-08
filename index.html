@@ -738,6 +738,8 @@ window.__CARDS__ = [{"kicker":"브리핑","title":"오늘의 한 줄 브리핑",
 
   function setActiveTab(tab){
     activeTab = tab;
+    activeWeek = null;
+    document.querySelectorAll('.side-week').forEach(function(el){ el.classList.remove('active'); });
     topNav.querySelectorAll('.cat[data-tab]').forEach(function(b){ b.classList.remove('active'); });
     memoNavBtn.classList.remove('active');
     if(tab==='memo'){ memoNavBtn.classList.add('active'); }
