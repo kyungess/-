@@ -640,6 +640,9 @@ window.__CARDS__ = [{"kicker":"브리핑","title":"오늘의 한 줄 브리핑",
     var weekCards = cardsForWeek(CARDS, activeWeek);
     var byGroup = {nn:[], ct:[], univ:[], oa:[], cr:[]};
     weekCards.forEach(function(c){ byGroup[c.group].push(c); });
+    Object.keys(byGroup).forEach(function(g){
+      byGroup[g].sort(function(a,b){ return (b.date||'').localeCompare(a.date||''); });
+    });
 
     var html;
     if(activeTab==='all'){
