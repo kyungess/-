@@ -270,7 +270,7 @@
   .btn-primary:disabled{opacity:.5; cursor:not-allowed;}
   /* 싸이월드 일촌평 느낌의 방명록 리스트 */
   .guestbook{max-width:620px; border:1px solid var(--line); border-radius:12px; overflow:hidden; background:var(--paper);}
-  .gb-row{display:flex; gap:12px; padding:14px 16px; border-bottom:1px solid var(--line);}
+  .gb-row{display:flex; align-items:flex-start; gap:12px; padding:14px 16px; border-bottom:1px solid var(--line);}
   .gb-row:last-child{border-bottom:none;}
   .gb-avatar{
     width:34px; height:34px; border-radius:50%; flex:none;
@@ -566,6 +566,9 @@ window.__CARDS__ = [{"kicker":"브리핑","title":"오늘의 한 줄 브리핑",
     viewedThisSession[id] = 1;
     try{ sessionStorage.setItem('gin_viewed', JSON.stringify(viewedThisSession)); }catch(e){}
     viewCounts[id] = (viewCounts[id]||0)+1;
+    document.querySelectorAll('.card[data-id="'+id+'"] .view-count').forEach(function(el){
+      el.textContent = viewCounts[id];
+    });
     fetch(SUPABASE_URL+'/rest/v1/views', {
       method:'POST', headers: sbHeaders({'Prefer':'return=minimal'}),
       body: JSON.stringify({target_id:id})
@@ -598,7 +601,7 @@ window.__CARDS__ = [{"kicker":"브리핑","title":"오늘의 한 줄 브리핑",
       '<div class="card-foot">'+
         (hasMore ? '<button class="more" data-read="'+card.id+'">전체 원문 보기</button>' : '<span></span>')+
         '<div class="card-actions">'+
-          '<span class="views" aria-label="조회수"><svg viewBox="0 0 24 24"><path d="M1 12s4-7 11-7 11 7 11 7-4 7-11 7-11-7-11-7z"/><circle cx="12" cy="12" r="3"/></svg>'+vCount+'</span>'+
+          '<span class="views" aria-label="조회수"><svg viewBox="0 0 24 24"><path d="M1 12s4-7 11-7 11 7 11 7-4 7-11 7-11-7-11-7z"/><circle cx="12" cy="12" r="3"/></svg><span class="view-count">'+vCount+'</span></span>'+
           '<button class="cmt-btn" data-cmt="'+card.id+'">💬 '+cCount+'</button>'+
         '</div>'+
       '</div>'+
@@ -683,6 +686,7 @@ window.__CARDS__ = [{"kicker":"브리핑","title":"오늘의 한 줄 브리핑",
 
   function memoRowHTML(m){
     var initial = (m.nickname||'?').trim().charAt(0) || '?';
+    var mine = nickname && m.nickname===nickname;
     return (
     '<div class="gb-row">'+
       '<div class="gb-avatar">'+esc(initial)+'</div>'+
@@ -690,10 +694,30 @@ window.__CARDS__ = [{"kicker":"브리핑","title":"오늘의 한 줄 브리핑",
         '<div class="gb-head"><span class="gb-name">'+esc(m.nickname)+'</span><span class="gb-time">'+fmtTime(m.created_at)+'</span></div>'+
         '<div class="gb-text">'+esc(m.text)+'</div>'+
       '</div>'+
+      (mine ? '<button class="comment-del" data-mid="'+m.id+'" aria-label="삭제">🗑️</button>' : '')+
     '</div>');
   }
 
+  function deleteMemo(memoId){
+    fetch(SUPABASE_URL+'/rest/v1/memos?id=eq.'+encodeURIComponent(memoId), {
+      method:'DELETE', headers: sbHeaders({'Prefer':'return=representation'})
+    }).then(function(r){
+      if(!r.ok) throw new Error('delete failed');
+      return r.json();
+    }).then(function(deleted){
+      if(!deleted || deleted.length===0) throw new Error('nothing deleted');
+      showToast('메모를 삭제했어요');
+      fetchMemos(function(){ if(activeTab==='memo'){ app.innerHTML = memoShellHTML(false); bindMemoEvents(); } });
+    }).catch(function(){ showToast('삭제에 실패했어요. 잠시 후 다시 시도해주세요.'); });
+  }
+
   function bindMemoEvents(){
+    app.querySelectorAll('.comment-del[data-mid]').forEach(function(btn){
+      btn.addEventListener('click', function(){
+        if(!confirm('메모를 삭제할까요?')) return;
+        deleteMemo(btn.dataset.mid);
+      });
+    });
     var btn = document.getElementById('memoSubmit');
     if(btn){
       btn.addEventListener('click', function(){
@@ -804,14 +828,17 @@ window.__CARDS__ = [{"kicker":"브리핑","title":"오늘의 한 줄 브리핑",
   }
   function deleteComment(commentId, targetId){
     fetch(SUPABASE_URL+'/rest/v1/comments?id=eq.'+encodeURIComponent(commentId), {
-      method:'DELETE', headers: sbHeaders({'Prefer':'return=minimal'})
+      method:'DELETE', headers: sbHeaders({'Prefer':'return=representation'})
     }).then(function(r){
       if(!r.ok) throw new Error('delete failed');
+      return r.json();
+    }).then(function(deleted){
+      if(!deleted || deleted.length===0) throw new Error('nothing deleted');
       commentCounts[targetId] = Math.max(0, (commentCounts[targetId]||1)-1);
       showToast('댓글을 삭제했어요');
       fetchComments(targetId, function(list){ renderReadComments(list); });
       render();
-    }).catch(function(){ showToast('삭제에 실패했어요.'); });
+    }).catch(function(){ showToast('삭제에 실패했어요. 잠시 후 다시 시도해주세요.'); });
   }
   function closeReadModal(){
     document.getElementById('readScrim').classList.remove('open');
