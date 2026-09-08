@@ -761,6 +761,13 @@ window.__CARDS__ = [{"kicker":"브리핑","title":"오늘의 한 줄 브리핑",
     activeWeek = (activeWeek === id) ? null : id;
     sidebar.querySelectorAll('.side-week').forEach(function(el){ el.classList.remove('active'); });
     if(activeWeek) wk.classList.add('active');
+    if(activeTab==='memo'){
+      activeTab = 'all';
+      topNav.querySelectorAll('.cat[data-tab]').forEach(function(b){ b.classList.remove('active'); });
+      memoNavBtn.classList.remove('active');
+      var allBtn = topNav.querySelector('.cat[data-tab="all"]');
+      if(allBtn) allBtn.classList.add('active');
+    }
     window.scrollTo({top:0, behavior:'instant'});
     render();
   });
